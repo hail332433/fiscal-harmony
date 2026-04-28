@@ -1,11 +1,12 @@
 import { useFiscalStore } from "@/store/fiscal-store";
 import { Navigate } from "react-router-dom";
 import { fmtBRL, fmtNum, fmtDur } from "@/lib/format";
-import { FileText, Receipt, TrendingUp, AlertTriangle, ShieldAlert, ShieldCheck, Download } from "lucide-react";
+import { FileText, Receipt, TrendingUp, AlertTriangle, ShieldAlert, ShieldCheck, Download, Clock, Loader2 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Button } from "@/components/ui/button";
 import { exportDashboardPdf } from "@/lib/export-pdf";
 import { toast } from "sonner";
+import { useEffect, useRef, useState } from "react";
 
 const RISK_COLORS = { ALTA: "hsl(var(--destructive))", MEDIA: "hsl(var(--warning))", BAIXA: "hsl(var(--success))" };
 
