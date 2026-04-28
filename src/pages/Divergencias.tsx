@@ -52,9 +52,8 @@ export default function Divergencias() {
     <div className="px-10 py-10 max-w-[1400px] space-y-6">
       <header className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <div className="text-xs font-medium tracking-widest text-primary uppercase">Etapa 5 de 5</div>
-          <h1 className="text-3xl font-semibold tracking-tight mt-1">Divergências</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl font-bold tracking-tight">Divergências</h1>
+          <p className="text-sm text-muted-foreground mt-1.5">
             {fmtNum(divergencias.length)} divergência(s) detectada(s).{" "}
             {corrigiveis > 0 && (
               <span className="text-foreground">
