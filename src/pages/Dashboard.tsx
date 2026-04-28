@@ -27,6 +27,13 @@ function StatCard({ icon: Icon, label, value, sub }: any) {
 
 export default function Dashboard() {
   const { dashboard, duracaoMs, notas } = useFiscalStore();
+  const [exporting, setExporting] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const [estimated, setEstimated] = useState(0);
+  const tickRef = useRef<number | null>(null);
+
+  useEffect(() => () => { if (tickRef.current) window.clearInterval(tickRef.current); }, []);
+
   if (!dashboard) return <Navigate to="/upload" replace />;
 
   const { stats, taxCards, riskSummary } = dashboard;
@@ -35,6 +42,46 @@ export default function Dashboard() {
     { name: "Média", value: riskSummary.media, key: "MEDIA" },
     { name: "Baixa", value: riskSummary.baixa, key: "BAIXA" },
   ].filter((r) => r.value > 0);
+
+  // Estimativa: ~120ms base + 8ms por nota (autoTable é o gargalo)
+  const estimateMs = (n: number) => Math.max(400, 120 + n * 8);
+
+  const handleExport = () => {
+    if (exporting) return;
+    const total = estimateMs(notas.length);
+    setEstimated(total);
+    setElapsed(0);
+    setExporting(true);
+    const start = performance.now();
+    tickRef.current = window.setInterval(() => {
+      setElapsed(performance.now() - start);
+    }, 100);
+
+    // Permite o React renderizar antes do bloqueio síncrono do jsPDF
+    setTimeout(() => {
+      try {
+        exportDashboardPdf(dashboard, notas, duracaoMs);
+        toast.success("Relatório PDF gerado com sucesso.");
+      } catch (e: any) {
+        toast.error("Falha ao gerar PDF: " + (e?.message ?? "erro desconhecido"));
+      } finally {
+        if (tickRef.current) {
+          window.clearInterval(tickRef.current);
+          tickRef.current = null;
+        }
+        setExporting(false);
+        setElapsed(0);
+      }
+    }, 50);
+  };
+
+  const remaining = Math.max(0, estimated - elapsed);
+  const fmtClock = (ms: number) => {
+    const s = Math.ceil(ms / 1000);
+    const mm = String(Math.floor(s / 60)).padStart(2, "0");
+    const ss = String(s % 60).padStart(2, "0");
+    return `${mm}:${ss}`;
+  };
 
   return (
     <div className="px-10 py-10 max-w-7xl space-y-8">
@@ -45,19 +92,20 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-4">
           <div className="text-sm text-muted-foreground">Processado em {fmtDur(duracaoMs)}</div>
-          <Button
-            onClick={() => {
-              try {
-                exportDashboardPdf(dashboard, notas, duracaoMs);
-                toast.success("Relatório PDF gerado com sucesso.");
-              } catch (e: any) {
-                toast.error("Falha ao gerar PDF: " + (e?.message ?? "erro desconhecido"));
-              }
-            }}
-            className="gap-2"
-          >
-            <Download className="size-4" />
-            Exportar PDF
+          {exporting && (
+            <div
+              className="flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm text-primary num"
+              aria-live="polite"
+              title="Tempo restante estimado"
+            >
+              <Clock className="size-4 animate-pulse" />
+              <span className="tabular-nums">{fmtClock(remaining)}</span>
+              <span className="text-xs text-muted-foreground">restante</span>
+            </div>
+          )}
+          <Button onClick={handleExport} className="gap-2" disabled={exporting}>
+            {exporting ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+            {exporting ? "Gerando..." : "Exportar PDF"}
           </Button>
         </div>
       </header>
