@@ -4,14 +4,18 @@ import type { WorkerOutbound } from "./fiscal-types";
 let worker: Worker | null = null;
 
 export function startPipeline(file: File) {
-  const set = useFiscalStore.getState().set;
-  useFiscalStore.getState().reset();
-  set({
+  const store = useFiscalStore.getState();
+  store.reset();
+  store.set({
     state: "uploading",
     fileName: file.name,
     fileSize: file.size,
     message: "Carregando arquivo…",
+    phase: "upload",
   });
+  // simula progresso de "upload" local (leitura do File para o worker é instantânea,
+  // então marcamos 100% imediato; tamanho real fica visível na fase de extração).
+  store.setProgress({ phase: "upload", current: file.size, total: file.size });
 
   if (worker) worker.terminate();
   worker = new Worker(new URL("../workers/fiscal.worker.ts", import.meta.url), {
@@ -24,7 +28,12 @@ export function startPipeline(file: File) {
     if (msg.type === "state") {
       s.set({ state: msg.state, message: msg.message ?? s.message });
     } else if (msg.type === "progress") {
-      s.set({ processed: msg.processed, total: msg.total, batch: msg.batch });
+      s.setProgress({
+        phase: msg.phase,
+        current: msg.current,
+        total: msg.total,
+        batch: msg.batch,
+      });
     } else if (msg.type === "done") {
       s.set({
         dashboard: msg.dashboard,

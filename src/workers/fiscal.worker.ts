@@ -244,33 +244,86 @@ const decoder = new TextDecoder("utf-8", { fatal: false });
 
 async function run(file: File) {
   const start = performance.now();
-  post({ type: "state", state: "uploaded" });
-  post({ type: "state", state: "extracting", message: "Lendo ZIP em streaming…" });
+
+  // ===== FASE 1: upload (já recebido — apenas marca concluído)
+  post({ type: "state", state: "uploaded", message: "Arquivo recebido" });
+  post({ type: "progress", phase: "upload", current: file.size, total: file.size });
+
+  // ===== FASE 2: descompactação COMPLETA (entry-by-entry, mas só extração)
+  post({ type: "state", state: "extracting", message: "Descompactando ZIP…" });
+  const xmls: Uint8Array[] = [];
+  const totalBytes = file.size;
+  let bytesRead = 0;
+
+  await new Promise<void>((resolve, reject) => {
+    const unzip = new Unzip((stream) => {
+      if (!stream.name.toLowerCase().endsWith(".xml")) {
+        stream.ondata = () => {};
+        stream.start();
+        return;
+      }
+      const chunks: Uint8Array[] = [];
+      stream.ondata = (err, data, final) => {
+        if (err) return reject(err);
+        if (data && data.length) chunks.push(data);
+        if (final) {
+          let total = 0;
+          for (const c of chunks) total += c.length;
+          const merged = new Uint8Array(total);
+          let o = 0;
+          for (const c of chunks) {
+            merged.set(c, o);
+            o += c.length;
+          }
+          xmls.push(merged);
+        }
+      };
+      stream.start();
+    });
+    unzip.register(UnzipInflate);
+
+    const reader = file.stream().getReader();
+    const pump = (): Promise<void> =>
+      reader.read().then(({ done, value }) => {
+        if (done) {
+          unzip.push(new Uint8Array(0), true);
+          post({ type: "progress", phase: "extract", current: totalBytes, total: totalBytes });
+          return;
+        }
+        bytesRead += value!.length;
+        unzip.push(value!, false);
+        post({ type: "progress", phase: "extract", current: bytesRead, total: totalBytes });
+        return pump();
+      });
+    pump().then(resolve).catch(reject);
+  });
+
+  // ===== FASE 3: processamento em lotes
+  const totalXmls = xmls.length;
+  post({
+    type: "state",
+    state: "processing",
+    message: `${totalXmls.toLocaleString("pt-BR")} XMLs extraídos. Processando em lotes de ${BATCH_SIZE}…`,
+  });
 
   const agg = newAgg();
   const notas: NotaSimplificada[] = [];
   const divergencias: Divergencia[] = [];
   const seen = new Set<string>();
-
-  let batch: Uint8Array[] = [];
-  let totalDiscovered = 0;
   let processed = 0;
   let batchIndex = 0;
 
-  const flushBatch = async () => {
-    if (!batch.length) return;
+  for (let offset = 0; offset < totalXmls; offset += BATCH_SIZE) {
     batchIndex += 1;
-    post({ type: "state", state: "processing", message: `Lote ${batchIndex} (${batch.length} XMLs)` });
-    for (const bytes of batch) {
+    const end = Math.min(offset + BATCH_SIZE, totalXmls);
+    for (let i = offset; i < end; i++) {
+      const bytes = xmls[i];
       const hash = await sha256Hex(bytes);
-      if (seen.has(hash)) {
-        processed++;
-        continue;
-      }
+      processed++;
+      if (seen.has(hash)) continue;
       seen.add(hash);
       const text = decoder.decode(bytes);
       const r = processXml(text);
-      processed++;
       if (!r) continue;
       agg.totalNotas++;
       if (r.nota.modelo === 55) agg.modelo55++;
@@ -287,63 +340,15 @@ async function run(file: File) {
       notas.push(r.nota);
       for (const d of r.divergencias) divergencias.push(d);
     }
-    batch = []; // libera referências do lote (GC)
-    post({ type: "progress", processed, total: totalDiscovered, batch: batchIndex });
-    // cede o event loop
+    // libera referências dos XMLs do lote
+    for (let i = offset; i < end; i++) (xmls as any)[i] = null;
+    post({ type: "progress", phase: "process", current: processed, total: totalXmls, batch: batchIndex });
     await new Promise((r) => setTimeout(r, 0));
-  };
+  }
 
-  // streaming unzip
-  await new Promise<void>((resolve, reject) => {
-    const unzip = new Unzip((stream) => {
-      if (!stream.name.toLowerCase().endsWith(".xml")) {
-        stream.ondata = () => {};
-        stream.start();
-        return;
-      }
-      totalDiscovered++;
-      const chunks: Uint8Array[] = [];
-      stream.ondata = (err, data, final) => {
-        if (err) return reject(err);
-        if (data && data.length) chunks.push(data);
-        if (final) {
-          let total = 0;
-          for (const c of chunks) total += c.length;
-          const merged = new Uint8Array(total);
-          let o = 0;
-          for (const c of chunks) {
-            merged.set(c, o);
-            o += c.length;
-          }
-          batch.push(merged);
-          if (batch.length >= BATCH_SIZE) {
-            // pausa para drenar batch sincronicamente via microtask
-            queueMicrotask(() => {
-              flushBatch().catch(reject);
-            });
-          }
-        }
-      };
-      stream.start();
-    });
-    unzip.register(UnzipInflate);
-
-    const reader = file.stream().getReader();
-    const pump = (): Promise<void> =>
-      reader.read().then(({ done, value }) => {
-        if (done) {
-          unzip.push(new Uint8Array(0), true);
-          return;
-        }
-        unzip.push(value!, false);
-        return pump();
-      });
-    pump().then(resolve).catch(reject);
-  });
-
-  await flushBatch();
-
+  // ===== FASE 4: consolidação
   post({ type: "state", state: "consolidating", message: "Consolidando indicadores…" });
+  post({ type: "progress", phase: "consolidate", current: 0, total: 1 });
 
   const dashboard: DashboardData = {
     stats: {
@@ -359,6 +364,7 @@ async function run(file: File) {
     screensOrder: ["Upload", "Dashboard", "Notas", "Auditoria", "Divergências"],
   };
 
+  post({ type: "progress", phase: "consolidate", current: 1, total: 1 });
   post({ type: "state", state: "finished" });
   post({
     type: "done",
@@ -375,3 +381,4 @@ ctx.onmessage = (e: MessageEvent<WorkerInbound>) => {
     run(msg.file).catch((err) => post({ type: "error", message: String(err?.message ?? err) }));
   }
 };
+

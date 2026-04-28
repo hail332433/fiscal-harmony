@@ -57,13 +57,21 @@ export interface DashboardData {
   screensOrder: string[];
 }
 
+export type PipelinePhase = "upload" | "extract" | "process" | "consolidate";
+
 export type WorkerInbound =
   | { type: "start"; file: File }
   | { type: "cancel" };
 
 export type WorkerOutbound =
   | { type: "state"; state: PipelineState; message?: string }
-  | { type: "progress"; processed: number; total: number; batch: number; mem?: number }
+  | {
+      type: "progress";
+      phase: PipelinePhase;
+      current: number;
+      total: number;
+      batch?: number;
+    }
   | {
       type: "done";
       dashboard: DashboardData;

@@ -3,13 +3,34 @@ import { Navigate } from "react-router-dom";
 import { useFiscalStore } from "@/store/fiscal-store";
 import { fmtBRL, fmtNum } from "@/lib/format";
 import type { Severity } from "@/lib/fiscal-types";
+import { Button } from "@/components/ui/button";
+import { Wand2 } from "lucide-react";
+import { toast } from "sonner";
 
 const PAGE = 50;
 
 export default function Divergencias() {
-  const { divergencias, dashboard } = useFiscalStore();
+  const { divergencias, dashboard, applyAutoCorrections } = useFiscalStore();
   const [grav, setGrav] = useState<"all" | Severity>("all");
   const [page, setPage] = useState(0);
+
+  const corrigiveis = useMemo(
+    () => divergencias.filter((d) => d.status === "CORRIGIDO").length,
+    [divergencias]
+  );
+
+  const handleCorrigir = () => {
+    const { corrigidas, restantes } = applyAutoCorrections();
+    if (corrigidas === 0) {
+      toast.info("Nenhuma divergência auto-corrigível encontrada.");
+      return;
+    }
+    toast.success(
+      `${corrigidas.toLocaleString("pt-BR")} divergência(s) corrigidas — extração agora fiel ao XML.`,
+      { description: `${restantes.toLocaleString("pt-BR")} crítica(s) permanecem para revisão.` }
+    );
+    setPage(0);
+  };
 
   const filtered = useMemo(
     () => (grav === "all" ? divergencias : divergencias.filter((d) => d.gravidade === grav)),
@@ -29,10 +50,28 @@ export default function Divergencias() {
 
   return (
     <div className="px-10 py-10 max-w-[1400px] space-y-6">
-      <header>
-        <div className="text-xs font-medium tracking-widest text-primary uppercase">Etapa 5 de 5</div>
-        <h1 className="text-3xl font-semibold tracking-tight mt-1">Divergências</h1>
-        <p className="text-muted-foreground mt-1">{fmtNum(divergencias.length)} divergências detectadas no lote.</p>
+      <header className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <div className="text-xs font-medium tracking-widest text-primary uppercase">Etapa 5 de 5</div>
+          <h1 className="text-3xl font-semibold tracking-tight mt-1">Divergências</h1>
+          <p className="text-muted-foreground mt-1">
+            {fmtNum(divergencias.length)} divergência(s) detectada(s).{" "}
+            {corrigiveis > 0 && (
+              <span className="text-foreground">
+                <strong>{fmtNum(corrigiveis)}</strong> podem ser auto-corrigidas pela regra do XML.
+              </span>
+            )}
+          </p>
+        </div>
+        <Button
+          size="lg"
+          onClick={handleCorrigir}
+          disabled={corrigiveis === 0}
+          className="bg-gradient-primary shadow-elegant"
+        >
+          <Wand2 className="size-4 mr-2" />
+          Corrigir divergências ({fmtNum(corrigiveis)})
+        </Button>
       </header>
 
       <div className="flex gap-3">
