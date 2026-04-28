@@ -36,9 +36,8 @@ export default function Notas() {
   return (
     <div className="px-10 py-10 max-w-[1400px] space-y-6">
       <header>
-        <div className="text-xs font-medium tracking-widest text-primary uppercase">Etapa 3 de 5</div>
-        <h1 className="text-3xl font-semibold tracking-tight mt-1">Notas processadas</h1>
-        <p className="text-muted-foreground mt-1">{filtered.length.toLocaleString("pt-BR")} notas (de {notas.length.toLocaleString("pt-BR")})</p>
+        <h1 className="text-2xl font-bold tracking-tight">Notas</h1>
+        <p className="text-sm text-muted-foreground mt-1.5">{filtered.length.toLocaleString("pt-BR")} notas (de {notas.length.toLocaleString("pt-BR")})</p>
       </header>
 
       <div className="flex gap-3 items-center">

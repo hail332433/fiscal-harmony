@@ -26,12 +26,9 @@ export default function Upload() {
   return (
     <div className="px-10 py-10 max-w-5xl mx-auto space-y-8">
       <header>
-        <div className="text-xs font-medium tracking-widest text-primary uppercase">Etapa 1 de 5</div>
-        <h1 className="text-3xl font-semibold tracking-tight mt-1">Upload de XMLs fiscais</h1>
-        <p className="text-muted-foreground mt-2 max-w-2xl">
-          Envie um <strong>.zip</strong> de até <strong>500&nbsp;MB</strong> com até <strong>80&nbsp;mil</strong> XMLs
-          de NF-e (mod. 55) e NFC-e (mod. 65). O processamento roda 100% no seu navegador, em streaming, com
-          memória constante.
+        <h1 className="text-2xl font-bold tracking-tight">Upload de Arquivos XML</h1>
+        <p className="text-sm text-muted-foreground mt-1.5">
+          Suporta múltiplos .xml ou .zip até 500 MB. Processamento em lotes de 5.000 arquivos.
         </p>
       </header>
 
@@ -44,22 +41,19 @@ export default function Upload() {
           const f = e.dataTransfer.files?.[0];
           if (f) onFile(f);
         }}
-        className={`relative rounded-2xl border-2 border-dashed transition p-12 text-center bg-gradient-surface
-          ${drag ? "border-primary bg-secondary" : "border-border"}
+        onClick={() => !busy && inputRef.current?.click()}
+        className={`relative rounded-xl border-2 border-dashed transition p-14 text-center cursor-pointer bg-card
+          ${drag ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"}
           ${busy ? "opacity-60 pointer-events-none" : ""}`}
       >
-        <div className="size-16 mx-auto rounded-2xl bg-gradient-primary grid place-items-center shadow-elevated">
-          <UploadIcon className="size-7 text-primary-foreground" />
+        <div className="size-14 mx-auto rounded-full bg-primary/10 grid place-items-center">
+          <UploadIcon className="size-6 text-primary" />
         </div>
-        <h2 className="mt-5 text-xl font-semibold">Arraste o ZIP aqui</h2>
-        <p className="text-sm text-muted-foreground mt-1">ou clique para selecionar do disco</p>
-        <Button
-          className="mt-5"
-          onClick={() => inputRef.current?.click()}
-          disabled={busy}
-        >
-          Selecionar arquivo
-        </Button>
+        <h2 className="mt-5 text-base font-semibold text-foreground">Arraste ou clique para selecionar</h2>
+        <p className="text-sm text-muted-foreground mt-1.5">
+          <span className="text-primary font-medium">.xml</span> individuais ou{" "}
+          <span className="text-primary font-medium">.zip</span> com múltiplos XMLs (max 500 MB)
+        </p>
         <input
           ref={inputRef}
           type="file"
@@ -72,7 +66,7 @@ export default function Upload() {
           }}
         />
         {fileName && (
-          <div className="mt-6 inline-flex items-center gap-3 rounded-lg border bg-card px-4 py-2 text-sm">
+          <div className="mt-6 inline-flex items-center gap-3 rounded-lg border bg-secondary px-4 py-2 text-sm">
             <FileArchive className="size-4 text-primary" />
             <span className="font-medium">{fileName}</span>
             <span className="text-muted-foreground num">· {fmtBytes(fileSize)}</span>

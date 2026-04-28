@@ -36,9 +36,8 @@ export default function Dashboard() {
     <div className="px-10 py-10 max-w-7xl space-y-8">
       <header className="flex items-end justify-between">
         <div>
-          <div className="text-xs font-medium tracking-widest text-primary uppercase">Etapa 2 de 5</div>
-          <h1 className="text-3xl font-semibold tracking-tight mt-1">Dashboard fiscal</h1>
-          <p className="text-muted-foreground mt-1">Consolidação determinística — XML é soberano.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1.5">Consolidado da sessão ativa</p>
         </div>
         <div className="text-sm text-muted-foreground">Processado em {fmtDur(duracaoMs)}</div>
       </header>
