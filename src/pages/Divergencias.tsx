@@ -14,20 +14,17 @@ export default function Divergencias() {
   const [grav, setGrav] = useState<"all" | Severity>("all");
   const [page, setPage] = useState(0);
 
-  const corrigiveis = useMemo(
-    () => divergencias.filter((d) => d.status === "CORRIGIDO").length,
-    [divergencias]
-  );
+  const totalCorrigiveis = divergencias.length;
 
   const handleCorrigir = () => {
-    const { corrigidas, restantes } = applyAutoCorrections();
+    const { corrigidas } = applyAutoCorrections();
     if (corrigidas === 0) {
-      toast.info("Nenhuma divergência auto-corrigível encontrada.");
+      toast.info("Nenhuma divergência para corrigir.");
       return;
     }
     toast.success(
       `${corrigidas.toLocaleString("pt-BR")} divergência(s) corrigidas — extração agora fiel ao XML.`,
-      { description: `${restantes.toLocaleString("pt-BR")} crítica(s) permanecem para revisão.` }
+      { description: "Dashboard e notas atualizados com os valores declarados." }
     );
     setPage(0);
   };
