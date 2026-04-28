@@ -9,17 +9,17 @@ import { toast } from "sonner";
 
 const RISK_COLORS = { ALTA: "hsl(var(--destructive))", MEDIA: "hsl(var(--warning))", BAIXA: "hsl(var(--success))" };
 
-function StatCard({ icon: Icon, label, value, sub, accent }: any) {
+function StatCard({ icon: Icon, label, value, sub }: any) {
   return (
-    <div className="rounded-xl border bg-card p-5 shadow-elegant">
+    <div className="rounded-xl border border-primary/20 bg-gradient-primary p-5 shadow-elegant text-primary-foreground">
       <div className="flex items-center justify-between">
-        <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-        <div className={`size-8 rounded-md grid place-items-center ${accent ?? "bg-secondary"}`}>
+        <div className="text-xs uppercase tracking-wider text-primary-foreground/80">{label}</div>
+        <div className="size-8 rounded-md grid place-items-center bg-white/15 text-primary-foreground">
           <Icon className="size-4" />
         </div>
       </div>
       <div className="mt-3 text-2xl font-semibold num">{value}</div>
-      {sub && <div className="text-xs text-muted-foreground mt-1">{sub}</div>}
+      {sub && <div className="text-xs text-primary-foreground/80 mt-1">{sub}</div>}
     </div>
   );
 }
@@ -62,10 +62,10 @@ export default function Dashboard() {
       </header>
 
       <div className="grid md:grid-cols-4 gap-4">
-        <StatCard icon={FileText} label="Total de notas" value={fmtNum(stats.totalNotas)} accent="bg-primary/10 text-primary" />
-        <StatCard icon={Receipt} label="📄 NF-e (mod. 55)" value={fmtNum(stats.modelo55)} accent="bg-accent/10 text-accent" />
-        <StatCard icon={Receipt} label="🧾 NFC-e (mod. 65)" value={fmtNum(stats.modelo65)} accent="bg-accent/10 text-accent" />
-        <StatCard icon={TrendingUp} label="Receita total" value={fmtBRL(stats.totalRevenue)} accent="bg-success/15 text-success" />
+        <StatCard icon={FileText} label="Total de notas" value={fmtNum(stats.totalNotas)} />
+        <StatCard icon={Receipt} label="📄 NF-e (mod. 55)" value={fmtNum(stats.modelo55)} />
+        <StatCard icon={Receipt} label="🧾 NFC-e (mod. 65)" value={fmtNum(stats.modelo65)} />
+        <StatCard icon={TrendingUp} label="Receita total" value={fmtBRL(stats.totalRevenue)} />
       </div>
 
       <section>
@@ -75,10 +75,10 @@ export default function Dashboard() {
         ) : (
           <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
             {taxCards.map((t) => (
-              <div key={t.title} className="rounded-xl border bg-card p-4">
-                <div className="text-xs uppercase tracking-wider text-muted-foreground">{t.title}</div>
+              <div key={t.title} className="rounded-xl border border-primary/20 bg-gradient-primary text-primary-foreground p-4 shadow-elegant">
+                <div className="text-xs uppercase tracking-wider text-primary-foreground/80">{t.title}</div>
                 <div className="mt-2 text-xl font-semibold num">{fmtBRL(t.totalValue)}</div>
-                <div className="text-xs text-muted-foreground mt-1 num">Base: {fmtBRL(t.totalBase)}</div>
+                <div className="text-xs text-primary-foreground/75 mt-1 num">Base: {fmtBRL(t.totalBase)}</div>
               </div>
             ))}
           </div>
