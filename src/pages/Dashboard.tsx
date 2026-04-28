@@ -1,8 +1,11 @@
 import { useFiscalStore } from "@/store/fiscal-store";
 import { Navigate } from "react-router-dom";
 import { fmtBRL, fmtNum, fmtDur } from "@/lib/format";
-import { FileText, Receipt, TrendingUp, AlertTriangle, ShieldAlert, ShieldCheck } from "lucide-react";
+import { FileText, Receipt, TrendingUp, AlertTriangle, ShieldAlert, ShieldCheck, Download } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { Button } from "@/components/ui/button";
+import { exportDashboardPdf } from "@/lib/export-pdf";
+import { toast } from "sonner";
 
 const RISK_COLORS = { ALTA: "hsl(var(--destructive))", MEDIA: "hsl(var(--warning))", BAIXA: "hsl(var(--success))" };
 
@@ -34,12 +37,28 @@ export default function Dashboard() {
 
   return (
     <div className="px-10 py-10 max-w-7xl space-y-8">
-      <header className="flex items-end justify-between">
+      <header className="flex items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1.5">Consolidado da sessão ativa</p>
         </div>
-        <div className="text-sm text-muted-foreground">Processado em {fmtDur(duracaoMs)}</div>
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-muted-foreground">Processado em {fmtDur(duracaoMs)}</div>
+          <Button
+            onClick={() => {
+              try {
+                exportDashboardPdf(dashboard, notas, duracaoMs);
+                toast.success("Relatório PDF gerado com sucesso.");
+              } catch (e: any) {
+                toast.error("Falha ao gerar PDF: " + (e?.message ?? "erro desconhecido"));
+              }
+            }}
+            className="gap-2"
+          >
+            <Download className="size-4" />
+            Exportar PDF
+          </Button>
+        </div>
       </header>
 
       <div className="grid md:grid-cols-4 gap-4">
