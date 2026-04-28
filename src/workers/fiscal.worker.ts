@@ -30,7 +30,7 @@ const num = (v: unknown): number => {
   return isFinite(n) ? n : 0;
 };
 
-const taxKeys = ["ICMS", "PIS", "COFINS", "IPI", "ISSQN"] as const;
+const taxKeys = ["ICMS", "ICMS_ST", "FCP", "FCP_ST", "IPI", "PIS", "COFINS", "IBS", "CBS", "ISSQN"] as const;
 type TaxKey = typeof taxKeys[number];
 
 interface Aggregates {
@@ -72,6 +72,18 @@ interface Processed {
   divergencias: Divergencia[];
   taxes: Partial<Record<TaxKey, { v: number; b: number }>>;
 }
+
+// Procura recursivamente por uma tag (qualquer profundidade) — usado p/ vIBS/vCBS
+function findDeep(obj: any, key: string): any {
+  if (!obj || typeof obj !== "object") return undefined;
+  if (key in obj) return obj[key];
+  for (const k of Object.keys(obj)) {
+    const r = findDeep(obj[k], key);
+    if (r !== undefined) return r;
+  }
+  return undefined;
+}
+
 
 function processXml(xmlText: string): Processed | null {
   let doc: any;

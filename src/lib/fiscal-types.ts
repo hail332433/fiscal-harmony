@@ -38,6 +38,16 @@ export interface NotaSimplificada {
   divergencia: Severity | null;
   status: DivStatus | null;
   fonte: "ICMSTot" | "TOTAL_AUSENTE";
+  // Tributos declarados (do ICMSTot quando presente, somatório de itens em fallback)
+  vICMS: number;
+  vST: number;
+  vFCP: number;
+  vFCPST: number;
+  vIPI: number;
+  vPIS: number;
+  vCOFINS: number;
+  vIBS: number;
+  vCBS: number;
 }
 
 export interface TaxAggregate {
