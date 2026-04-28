@@ -28,6 +28,7 @@ interface FiscalStore {
   error: string | null;
   set: (p: Partial<FiscalStore>) => void;
   setProgress: (p: PhaseProgress) => void;
+  applyAutoCorrections: () => { corrigidas: number; restantes: number };
   reset: () => void;
 }
 
@@ -52,7 +53,7 @@ const initial = {
   error: null,
 };
 
-export const useFiscalStore = create<FiscalStore>((set) => ({
+export const useFiscalStore = create<FiscalStore>((set, get) => ({
   ...initial,
   set: (p) => set(p),
   setProgress: (p) =>
@@ -60,5 +61,44 @@ export const useFiscalStore = create<FiscalStore>((set) => ({
       phase: p.phase,
       progress: { ...s.progress, [p.phase]: p },
     })),
+  applyAutoCorrections: () => {
+    const { divergencias, notas, dashboard } = get();
+    if (!dashboard) return { corrigidas: 0, restantes: 0 };
+
+    // Chaves cujas divergências NÃO são críticas → podem ser auto-corrigidas
+    // (BAIXA, MEDIA e TOTAL_AUSENTE). Críticas (ALTA) permanecem para revisão manual.
+    const corrigidasChaves = new Set<string>();
+    const restantes = divergencias.filter((d) => {
+      if (d.status === "CRITICO") return true;
+      corrigidasChaves.add(d.chave);
+      return false;
+    });
+
+    // Atualiza notas: as corrigidas viram OK, mantendo o valor oficial vindo do XML.
+    const novasNotas = notas.map((n) => {
+      if (!corrigidasChaves.has(n.chave)) return n;
+      return { ...n, divergencia: null, status: null };
+    });
+
+    // Recalcula riskSummary
+    const risk = { alta: 0, media: 0, baixa: 0 };
+    for (const n of novasNotas) {
+      if (n.divergencia === "ALTA") risk.alta++;
+      else if (n.divergencia === "MEDIA") risk.media++;
+      else if (n.divergencia === "BAIXA") risk.baixa++;
+    }
+
+    set({
+      divergencias: restantes,
+      notas: novasNotas,
+      dashboard: { ...dashboard, riskSummary: risk },
+    });
+
+    return {
+      corrigidas: divergencias.length - restantes.length,
+      restantes: restantes.length,
+    };
+  },
   reset: () => set({ ...initial, progress: { ...emptyProgress } }),
 }));
+
