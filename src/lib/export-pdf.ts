@@ -15,18 +15,18 @@ function drawCard(
   value: string,
   sub?: string,
 ) {
-  doc.setDrawColor(220);
-  doc.setFillColor(255);
+  doc.setDrawColor(220,220,220);
+  doc.setFillColor(255,255,255);
   doc.roundedRect(x, y, w, h, 6, 6, "FD");
   doc.setFontSize(8);
-  doc.setTextColor(110);
+  doc.setTextColor(110,110,110);
   doc.text(label.toUpperCase(), x + 10, y + 16);
   doc.setFontSize(14);
-  doc.setTextColor(20);
+  doc.setTextColor(20,20,20);
   doc.text(value, x + 10, y + 38);
   if (sub) {
     doc.setFontSize(8);
-    doc.setTextColor(120);
+    doc.setTextColor(120,120,120);
     doc.text(sub, x + 10, y + 54);
   }
 }
@@ -40,15 +40,15 @@ function drawBarChart(
   title: string,
   data: { name: string; value: number }[],
 ) {
-  doc.setDrawColor(220);
+  doc.setDrawColor(220,220,220);
   doc.roundedRect(x, y, w, h, 6, 6, "S");
   doc.setFontSize(11);
-  doc.setTextColor(20);
+  doc.setTextColor(20,20,20);
   doc.text(title, x + 12, y + 18);
 
   if (!data.length) {
     doc.setFontSize(9);
-    doc.setTextColor(140);
+    doc.setTextColor(140,140,140);
     doc.text("Sem dados.", x + 12, y + 40);
     return;
   }
@@ -67,10 +67,10 @@ function drawBarChart(
     doc.setFillColor(79, 70, 229);
     doc.roundedRect(chartX, ry, Math.max(2, bw), barH, 3, 3, "F");
     doc.setFontSize(8);
-    doc.setTextColor(60);
+    doc.setTextColor(60,60,60);
     const label = d.name.length > 22 ? d.name.slice(0, 22) + "…" : d.name;
     doc.text(label, x + 12, ry + barH * 0.7);
-    doc.setTextColor(40);
+    doc.setTextColor(40,40,40);
     doc.text(fmtBRL(d.value), chartX + bw + 4, ry + barH * 0.7);
   });
 }
@@ -86,10 +86,10 @@ function drawRiskDonut(
 ) {
   const total = alta + media + baixa;
   if (!total) {
-    doc.setDrawColor(200);
+    doc.setDrawColor(200,200,200);
     doc.circle(cx, cy, r, "S");
     doc.setFontSize(9);
-    doc.setTextColor(120);
+    doc.setTextColor(120,120,120);
     doc.text("Sem divergências", cx - 40, cy + 3);
     return;
   }
@@ -127,7 +127,7 @@ function drawRiskDonut(
   doc.setFillColor(255, 255, 255);
   doc.circle(cx, cy, r * 0.55, "F");
   doc.setFontSize(10);
-  doc.setTextColor(40);
+  doc.setTextColor(40,40,40);
   doc.text(String(total), cx - doc.getTextWidth(String(total)) / 2, cy + 3);
 }
 
@@ -142,10 +142,10 @@ export function exportDashboardPdf(
 
   // ===== Cabeçalho =====
   doc.setFontSize(18);
-  doc.setTextColor(20);
+  doc.setTextColor(20,20,20);
   doc.text("Relatório Fiscal — Painel Consolidado", MARGIN, 50);
   doc.setFontSize(10);
-  doc.setTextColor(110);
+  doc.setTextColor(110,110,110);
   const dataStr = new Date().toLocaleString("pt-BR");
   doc.text(`Gerado em ${dataStr}  ·  Tempo de processamento: ${(duracaoMs / 1000).toFixed(1)}s`, MARGIN, 68);
 
@@ -162,7 +162,7 @@ export function exportDashboardPdf(
   // ===== Tributos =====
   let y = cardsY + cardH + 24;
   doc.setFontSize(12);
-  doc.setTextColor(20);
+  doc.setTextColor(20,20,20);
   doc.text("Tributos consolidados", MARGIN, y);
   y += 10;
   if (taxCards.length) {
@@ -182,10 +182,10 @@ export function exportDashboardPdf(
   const halfW = (pageW - MARGIN * 2 - 16) / 2;
 
   // Bloco risco
-  doc.setDrawColor(220);
+  doc.setDrawColor(220,220,220);
   doc.roundedRect(MARGIN, y, halfW, blockH, 6, 6, "S");
   doc.setFontSize(11);
-  doc.setTextColor(20);
+  doc.setTextColor(20,20,20);
   doc.text("Risco fiscal", MARGIN + 12, y + 18);
   drawRiskDonut(doc, MARGIN + 90, y + blockH / 2 + 10, 50, riskSummary.alta, riskSummary.media, riskSummary.baixa);
   // Legenda
@@ -200,7 +200,7 @@ export function exportDashboardPdf(
     doc.setFillColor(l.c[0], l.c[1], l.c[2]);
     doc.rect(legendX, ly - 8, 10, 10, "F");
     doc.setFontSize(10);
-    doc.setTextColor(40);
+    doc.setTextColor(40,40,40);
     doc.text(`${l.lbl}: ${fmtNum(l.val)}`, legendX + 16, ly);
     ly += 20;
   }
@@ -220,10 +220,10 @@ export function exportDashboardPdf(
   // ===== Página 2+: listagem de notas =====
   doc.addPage();
   doc.setFontSize(14);
-  doc.setTextColor(20);
+  doc.setTextColor(20,20,20);
   doc.text("Listagem de Notas Processadas", MARGIN, 40);
   doc.setFontSize(9);
-  doc.setTextColor(110);
+  doc.setTextColor(110,110,110);
   doc.text(`${fmtNum(notas.length)} notas — valores em BRL`, MARGIN, 56);
 
   autoTable(doc, {
@@ -267,7 +267,7 @@ export function exportDashboardPdf(
     didDrawPage: (data) => {
       const page = doc.getNumberOfPages();
       doc.setFontSize(8);
-      doc.setTextColor(140);
+      doc.setTextColor(140,140,140);
       doc.text(`Página ${page}`, pageW - MARGIN, pageH - 20, { align: "right" });
     },
   });
