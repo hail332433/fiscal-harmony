@@ -13,10 +13,10 @@
     --popover: 0 0% 100%;
     --popover-foreground: 182 100% 8%;
 
-    /* Green palette: #007F73 primary */
-    --primary: 174 100% 25%;
+    /* Verde escuro principal #0E5A3F */
+    --primary: 153 73% 20%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 165 100% 36%;
+    --primary-glow: 153 60% 35%;
 
     --secondary: 170 40% 95%;
     --secondary-foreground: 182 100% 12%;
@@ -24,10 +24,10 @@
     --muted: 170 25% 96%;
     --muted-foreground: 182 15% 40%;
 
-    --accent: 165 100% 31%;
+    --accent: 153 73% 20%;
     --accent-foreground: 0 0% 100%;
 
-    --success: 165 100% 31%;
+    --success: 153 73% 28%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
@@ -38,27 +38,27 @@
 
     --border: 170 20% 88%;
     --input: 170 20% 88%;
-    --ring: 174 100% 25%;
+    --ring: 153 73% 20%;
 
     --radius: 0.625rem;
 
-    --gradient-primary: linear-gradient(135deg, hsl(182 100% 12%), hsl(174 100% 25%));
-    --gradient-accent: linear-gradient(135deg, hsl(174 100% 25%), hsl(165 100% 36%));
-    --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%), hsl(170 30% 98%));
+    --gradient-primary: linear-gradient(135deg, hsl(153 73% 16%), hsl(153 73% 24%));
+    --gradient-accent: linear-gradient(135deg, hsl(153 73% 20%), hsl(153 60% 32%));
+    --gradient-surface: linear-gradient(180deg, hsl(0 0% 100%), hsl(153 30% 98%));
 
-    --shadow-sm: 0 1px 2px hsl(182 100% 8% / 0.05);
-    --shadow-md: 0 4px 12px -4px hsl(182 100% 8% / 0.08);
-    --shadow-lg: 0 12px 32px -12px hsl(182 100% 8% / 0.10);
+    --shadow-sm: 0 1px 2px hsl(153 73% 10% / 0.05);
+    --shadow-md: 0 4px 12px -4px hsl(153 73% 10% / 0.08);
+    --shadow-lg: 0 12px 32px -12px hsl(153 73% 10% / 0.10);
 
-    /* Sidebar: WHITE with green accents */
+    /* Sidebar: WHITE with dark green accents */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 182 40% 18%;
-    --sidebar-primary: 174 100% 25%;
+    --sidebar-foreground: 153 40% 18%;
+    --sidebar-primary: 153 73% 20%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 170 40% 95%;
-    --sidebar-accent-foreground: 174 100% 22%;
-    --sidebar-border: 170 20% 88%;
-    --sidebar-ring: 174 100% 25%;
+    --sidebar-accent: 153 40% 95%;
+    --sidebar-accent-foreground: 153 73% 18%;
+    --sidebar-border: 153 20% 88%;
+    --sidebar-ring: 153 73% 20%;
   }
 
   .dark {
