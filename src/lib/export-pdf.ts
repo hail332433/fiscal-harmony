@@ -320,9 +320,9 @@ export function exportDashboardPdf(
       fmtBRL(tot.cbs),
     ]],
     styles: { fontSize: 7, cellPadding: 3, overflow: "linebreak" },
-    headStyles: { fillColor: [79, 70, 229], textColor: 255, fontSize: 7 },
-    footStyles: { fillColor: [30, 41, 59], textColor: 255, fontSize: 7, fontStyle: "bold" },
-    alternateRowStyles: { fillColor: [248, 250, 252] },
+    headStyles: { fillColor: BRAND_DARK, textColor: 255, fontSize: 7, fontStyle: "bold" },
+    footStyles: { fillColor: BRAND_DEEP, textColor: 255, fontSize: 7, fontStyle: "bold" },
+    alternateRowStyles: { fillColor: [240, 248, 246] },
     showFoot: "lastPage",
     margin: { left: MARGIN, right: MARGIN },
     didDrawPage: () => {
