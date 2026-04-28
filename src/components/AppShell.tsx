@@ -12,7 +12,8 @@ const items = [
 ];
 
 export default function AppShell() {
-  const { state, processed, total, dashboard } = useFiscalStore();
+  const { state, progress, dashboard } = useFiscalStore();
+  const proc = progress.process;
   const hasData = !!dashboard;
 
   return (
@@ -56,8 +57,8 @@ export default function AppShell() {
         </nav>
         <div className="px-4 py-4 border-t border-sidebar-border text-xs text-sidebar-foreground/60">
           <div className="flex justify-between"><span>Pipeline</span><span className="font-mono">{state}</span></div>
-          {total > 0 && (
-            <div className="mt-1 num">{processed.toLocaleString("pt-BR")} / {total.toLocaleString("pt-BR")} XMLs</div>
+          {proc.total > 0 && (
+            <div className="mt-1 num">{proc.current.toLocaleString("pt-BR")} / {proc.total.toLocaleString("pt-BR")} XMLs</div>
           )}
         </div>
       </aside>
