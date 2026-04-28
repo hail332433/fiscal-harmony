@@ -7,12 +7,12 @@ const MARGIN = 40;
 
 type RGB = [number, number, number];
 
-// Paleta verde principal (do app)
-const BRAND_DARK: RGB = [0, 62, 64]; // #003E40
-const BRAND_DEEP: RGB = [0, 89, 91]; // #00595B
-const BRAND_MAIN: RGB = [0, 127, 115]; // #007F73
-const BRAND_MID: RGB = [0, 158, 132]; // #009E84
-const BRAND_LIGHT: RGB = [0, 184, 148]; // #00B894
+// Paleta verde principal (#0E5A3F base)
+const BRAND_DARK: RGB = [10, 64, 44]; // mais escuro
+const BRAND_DEEP: RGB = [14, 90, 63]; // #0E5A3F principal
+const BRAND_MAIN: RGB = [22, 117, 82];
+const BRAND_MID: RGB = [38, 145, 105];
+const BRAND_LIGHT: RGB = [76, 175, 130];
 
 /** Card sólido em verde escuro com texto branco (legível) */
 function drawColorCard(
