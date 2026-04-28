@@ -7,6 +7,14 @@ const MARGIN = 40;
 
 type RGB = [number, number, number];
 
+// Paleta verde principal (do app)
+const BRAND_DARK: RGB = [0, 62, 64]; // #003E40
+const BRAND_DEEP: RGB = [0, 89, 91]; // #00595B
+const BRAND_MAIN: RGB = [0, 127, 115]; // #007F73
+const BRAND_MID: RGB = [0, 158, 132]; // #009E84
+const BRAND_LIGHT: RGB = [0, 184, 148]; // #00B894
+
+/** Card sólido em verde escuro com texto branco (legível) */
 function drawColorCard(
   doc: jsPDF,
   x: number,
@@ -18,28 +26,22 @@ function drawColorCard(
   sub: string | undefined,
   color: RGB,
 ) {
-  // Fundo claro
-  const bg: RGB = [
-    Math.round(color[0] + (255 - color[0]) * 0.88),
-    Math.round(color[1] + (255 - color[1]) * 0.88),
-    Math.round(color[2] + (255 - color[2]) * 0.88),
-  ];
   doc.setDrawColor(color[0], color[1], color[2]);
-  doc.setFillColor(bg[0], bg[1], bg[2]);
-  doc.roundedRect(x, y, w, h, 6, 6, "FD");
-  // Barra lateral colorida
   doc.setFillColor(color[0], color[1], color[2]);
+  doc.roundedRect(x, y, w, h, 6, 6, "FD");
+  // Barra lateral mais clara para acento
+  doc.setFillColor(BRAND_LIGHT[0], BRAND_LIGHT[1], BRAND_LIGHT[2]);
   doc.roundedRect(x, y, 4, h, 2, 2, "F");
 
   doc.setFontSize(8);
-  doc.setTextColor(80, 80, 80);
+  doc.setTextColor(220, 240, 235);
   doc.text(label.toUpperCase(), x + 12, y + 16);
   doc.setFontSize(13);
-  doc.setTextColor(color[0], color[1], color[2]);
+  doc.setTextColor(255, 255, 255);
   doc.text(value, x + 12, y + 36);
   if (sub) {
     doc.setFontSize(7);
-    doc.setTextColor(110, 110, 110);
+    doc.setTextColor(200, 230, 222);
     doc.text(sub, x + 12, y + 50);
   }
 }
@@ -77,7 +79,7 @@ function drawBarChart(
   data.forEach((d, i) => {
     const ry = chartY + i * rowH + (rowH - barH) / 2;
     const bw = (d.value / max) * chartW;
-    doc.setFillColor(79, 70, 229);
+    doc.setFillColor(BRAND_MAIN[0], BRAND_MAIN[1], BRAND_MAIN[2]);
     doc.roundedRect(chartX, ry, Math.max(2, bw), barH, 3, 3, "F");
     doc.setFontSize(8);
     doc.setTextColor(60, 60, 60);
@@ -109,7 +111,7 @@ function drawRiskDonut(
   const segs: { v: number; color: RGB }[] = [
     { v: alta, color: [220, 38, 38] },
     { v: media, color: [217, 119, 6] },
-    { v: baixa, color: [22, 163, 74] },
+    { v: baixa, color: BRAND_MID },
   ];
   let start = -Math.PI / 2;
   for (const s of segs) {
@@ -134,29 +136,10 @@ function drawRiskDonut(
   doc.text(String(total), cx - doc.getTextWidth(String(total)) / 2, cy + 3);
 }
 
-// Paleta para cards de tributos (mantida estável por título)
-const TAX_COLORS: Record<string, RGB> = {
-  ICMS: [37, 99, 235],
-  ST: [14, 165, 233],
-  FCP: [6, 182, 212],
-  FCPST: [8, 145, 178],
-  IPI: [217, 119, 6],
-  PIS: [22, 163, 74],
-  COFINS: [5, 150, 105],
-  IBS: [124, 58, 237],
-  CBS: [219, 39, 119],
-  ISS: [234, 88, 12],
-};
-const FALLBACK_COLORS: RGB[] = [
-  [79, 70, 229],
-  [220, 38, 38],
-  [16, 185, 129],
-  [234, 179, 8],
-  [99, 102, 241],
-];
-function colorFor(title: string, idx: number): RGB {
-  const key = title.toUpperCase().replace(/[^A-Z]/g, "");
-  return TAX_COLORS[key] ?? FALLBACK_COLORS[idx % FALLBACK_COLORS.length];
+// Paleta verde para cards de tributos — alterna entre tons da paleta da marca
+const TAX_PALETTE: RGB[] = [BRAND_DARK, BRAND_DEEP, BRAND_MAIN, BRAND_MID, BRAND_LIGHT];
+function colorFor(_title: string, idx: number): RGB {
+  return TAX_PALETTE[idx % TAX_PALETTE.length];
 }
 
 export function exportDashboardPdf(
