@@ -11,7 +11,7 @@ const RISK_COLORS = { ALTA: "hsl(var(--destructive))", MEDIA: "hsl(var(--warning
 
 function StatCard({ icon: Icon, label, value, sub }: any) {
   return (
-    <div className="rounded-xl border border-primary/20 bg-gradient-primary p-5 shadow-elegant text-primary-foreground">
+    <div className="rounded-xl border border-primary/20 bg-primary p-5 shadow-elegant text-primary-foreground">
       <div className="flex items-center justify-between">
         <div className="text-xs uppercase tracking-wider text-primary-foreground/80">{label}</div>
         <div className="size-8 rounded-md grid place-items-center bg-white/15 text-primary-foreground">
@@ -75,7 +75,7 @@ export default function Dashboard() {
         ) : (
           <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
             {taxCards.map((t) => (
-              <div key={t.title} className="rounded-xl border border-primary/20 bg-gradient-primary text-primary-foreground p-4 shadow-elegant">
+              <div key={t.title} className="rounded-xl border border-primary/20 bg-primary text-primary-foreground p-4 shadow-elegant">
                 <div className="text-xs uppercase tracking-wider text-primary-foreground/80">{t.title}</div>
                 <div className="mt-2 text-xl font-semibold num">{fmtBRL(t.totalValue)}</div>
                 <div className="text-xs text-primary-foreground/75 mt-1 num">Base: {fmtBRL(t.totalBase)}</div>
