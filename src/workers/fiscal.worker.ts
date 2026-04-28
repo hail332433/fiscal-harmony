@@ -30,7 +30,7 @@ const num = (v: unknown): number => {
   return isFinite(n) ? n : 0;
 };
 
-const taxKeys = ["ICMS", "PIS", "COFINS", "IPI", "ISSQN"] as const;
+const taxKeys = ["ICMS", "ICMS_ST", "FCP", "FCP_ST", "IPI", "PIS", "COFINS", "IBS", "CBS", "ISSQN"] as const;
 type TaxKey = typeof taxKeys[number];
 
 interface Aggregates {
@@ -73,6 +73,18 @@ interface Processed {
   taxes: Partial<Record<TaxKey, { v: number; b: number }>>;
 }
 
+// Procura recursivamente por uma tag (qualquer profundidade) — usado p/ vIBS/vCBS
+function findDeep(obj: any, key: string): any {
+  if (!obj || typeof obj !== "object") return undefined;
+  if (key in obj) return obj[key];
+  for (const k of Object.keys(obj)) {
+    const r = findDeep(obj[k], key);
+    if (r !== undefined) return r;
+  }
+  return undefined;
+}
+
+
 function processXml(xmlText: string): Processed | null {
   let doc: any;
   try {
@@ -91,93 +103,129 @@ function processXml(xmlText: string): Processed | null {
   const dest = inf.dest ?? {};
   const total = inf.total ?? {};
   const ICMSTot = total.ICMSTot;
+  const IBSCBSTot = total.IBSCBSTot;
 
   const chave = String(inf.Id ?? "").replace(/^NFe/i, "") || "";
   const mod = parseInt(String(ide.mod ?? "55"), 10) === 65 ? 65 : 55;
 
+  // ===== Soma dos itens (sempre calculada — usada como referência ou fallback)
   const dets = asArray<any>(inf.det);
   let somaItens = 0;
-  const localTax: Processed["taxes"] = {};
+  // somatórios por imposto a partir dos itens (fallback quando ICMSTot ausente)
+  const itemAcc: Record<TaxKey, { v: number; b: number }> = {
+    ICMS: { v: 0, b: 0 }, ICMS_ST: { v: 0, b: 0 },
+    FCP: { v: 0, b: 0 }, FCP_ST: { v: 0, b: 0 },
+    IPI: { v: 0, b: 0 }, PIS: { v: 0, b: 0 }, COFINS: { v: 0, b: 0 },
+    IBS: { v: 0, b: 0 }, CBS: { v: 0, b: 0 }, ISSQN: { v: 0, b: 0 },
+  };
 
   for (const det of dets) {
     const prod = det.prod ?? {};
     somaItens += num(prod.vProd);
     const imposto = det.imposto ?? {};
-    // ICMS — varia muito (ICMS00, ICMS10...)
+
+    // ICMS — varia por CST (ICMS00, ICMS10, ICMS20, ...)
     const icmsBlock = imposto.ICMS;
     if (icmsBlock && typeof icmsBlock === "object") {
       for (const k of Object.keys(icmsBlock)) {
-        const node = (icmsBlock as any)[k];
-        if (node && typeof node === "object") {
-          const v = num(node.vICMS);
-          const b = num(node.vBC);
-          if (v || b) {
-            localTax.ICMS = localTax.ICMS ?? { v: 0, b: 0 };
-            localTax.ICMS.v += v;
-            localTax.ICMS.b += b;
-          }
-        }
+        const node = icmsBlock[k];
+        if (!node || typeof node !== "object") continue;
+        itemAcc.ICMS.v += num(node.vICMS);
+        itemAcc.ICMS.b += num(node.vBC);
+        itemAcc.ICMS_ST.v += num(node.vICMSST);
+        itemAcc.ICMS_ST.b += num(node.vBCST);
+        itemAcc.FCP.v += num(node.vFCP);
+        itemAcc.FCP_ST.v += num(node.vFCPST);
       }
     }
+    // PIS
     const pisNode = imposto.PIS;
     if (pisNode && typeof pisNode === "object") {
       for (const k of Object.keys(pisNode)) {
-        const node = (pisNode as any)[k];
-        if (node && typeof node === "object") {
-          const v = num(node.vPIS);
-          const b = num(node.vBC);
-          if (v || b) {
-            localTax.PIS = localTax.PIS ?? { v: 0, b: 0 };
-            localTax.PIS.v += v;
-            localTax.PIS.b += b;
-          }
-        }
+        const node = pisNode[k];
+        if (!node || typeof node !== "object") continue;
+        itemAcc.PIS.v += num(node.vPIS);
+        itemAcc.PIS.b += num(node.vBC);
       }
     }
+    // COFINS
     const cofinsNode = imposto.COFINS;
     if (cofinsNode && typeof cofinsNode === "object") {
       for (const k of Object.keys(cofinsNode)) {
-        const node = (cofinsNode as any)[k];
-        if (node && typeof node === "object") {
-          const v = num(node.vCOFINS);
-          const b = num(node.vBC);
-          if (v || b) {
-            localTax.COFINS = localTax.COFINS ?? { v: 0, b: 0 };
-            localTax.COFINS.v += v;
-            localTax.COFINS.b += b;
-          }
-        }
+        const node = cofinsNode[k];
+        if (!node || typeof node !== "object") continue;
+        itemAcc.COFINS.v += num(node.vCOFINS);
+        itemAcc.COFINS.b += num(node.vBC);
       }
     }
-    const ipiNode = imposto.IPI;
-    if (ipiNode?.IPITrib) {
-      const v = num(ipiNode.IPITrib.vIPI);
-      const b = num(ipiNode.IPITrib.vBC);
-      if (v || b) {
-        localTax.IPI = localTax.IPI ?? { v: 0, b: 0 };
-        localTax.IPI.v += v;
-        localTax.IPI.b += b;
-      }
+    // IPI
+    if (imposto.IPI?.IPITrib) {
+      itemAcc.IPI.v += num(imposto.IPI.IPITrib.vIPI);
+      itemAcc.IPI.b += num(imposto.IPI.IPITrib.vBC);
     }
+    // ISSQN
     if (imposto.ISSQN) {
-      const v = num(imposto.ISSQN.vISSQN);
-      const b = num(imposto.ISSQN.vBC);
-      if (v || b) {
-        localTax.ISSQN = localTax.ISSQN ?? { v: 0, b: 0 };
-        localTax.ISSQN.v += v;
-        localTax.ISSQN.b += b;
-      }
+      itemAcc.ISSQN.v += num(imposto.ISSQN.vISSQN);
+      itemAcc.ISSQN.b += num(imposto.ISSQN.vBC);
+    }
+    // IBS / CBS por item (Reforma Tributária — varia conforme grupo)
+    const vIBSItem = num(findDeep(imposto, "vIBS"));
+    const vCBSItem = num(findDeep(imposto, "vCBS"));
+    const bcIBSCBSItem = num(findDeep(imposto, "vBCIBSCBS"));
+    if (vIBSItem) itemAcc.IBS.v += vIBSItem;
+    if (vCBSItem) itemAcc.CBS.v += vCBSItem;
+    if (bcIBSCBSItem) {
+      itemAcc.IBS.b += bcIBSCBSItem;
+      itemAcc.CBS.b += bcIBSCBSItem;
     }
   }
 
+  // ===== Tributos OFICIAIS — XML soberano: prioriza <ICMSTot>/<IBSCBSTot>
   const temICMSTot = !!ICMSTot;
   const valorDeclarado = temICMSTot ? num(ICMSTot.vNF) : null;
   const valorOficial = temICMSTot ? (valorDeclarado as number) : somaItens;
   const fonte = temICMSTot ? "ICMSTot" : "TOTAL_AUSENTE";
 
+  const oficial: Record<TaxKey, { v: number; b: number }> = {
+    ICMS:    { v: 0, b: 0 }, ICMS_ST: { v: 0, b: 0 },
+    FCP:     { v: 0, b: 0 }, FCP_ST:  { v: 0, b: 0 },
+    IPI:     { v: 0, b: 0 }, PIS:     { v: 0, b: 0 }, COFINS: { v: 0, b: 0 },
+    IBS:     { v: 0, b: 0 }, CBS:     { v: 0, b: 0 }, ISSQN:  { v: 0, b: 0 },
+  };
+
+  if (temICMSTot) {
+    oficial.ICMS    = { v: num(ICMSTot.vICMS),   b: num(ICMSTot.vBC) };
+    oficial.ICMS_ST = { v: num(ICMSTot.vST),     b: num(ICMSTot.vBCST) };
+    oficial.FCP     = { v: num(ICMSTot.vFCP),    b: 0 };
+    oficial.FCP_ST  = { v: num(ICMSTot.vFCPST),  b: 0 };
+    oficial.IPI     = { v: num(ICMSTot.vIPI),    b: itemAcc.IPI.b };
+    oficial.PIS     = { v: num(ICMSTot.vPIS),    b: itemAcc.PIS.b };
+    oficial.COFINS  = { v: num(ICMSTot.vCOFINS), b: itemAcc.COFINS.b };
+    oficial.ISSQN   = { v: itemAcc.ISSQN.v,      b: itemAcc.ISSQN.b };
+  } else {
+    // Fallback: soma dos itens (todas as colunas)
+    Object.assign(oficial, itemAcc);
+  }
+
+  // IBS/CBS — usa IBSCBSTot quando presente (reforma tributária)
+  if (IBSCBSTot) {
+    const vIBS = num(findDeep(IBSCBSTot, "vIBS"));
+    const vCBS = num(findDeep(IBSCBSTot, "vCBS"));
+    const bcIBSCBS = num(findDeep(IBSCBSTot, "vBCIBSCBS"));
+    oficial.IBS = { v: vIBS, b: bcIBSCBS };
+    oficial.CBS = { v: vCBS, b: bcIBSCBS };
+  } else if (!temICMSTot) {
+    // já preenchido pelo Object.assign acima
+  } else {
+    // ICMSTot sem IBSCBSTot → usa o que veio dos itens (pode ser 0)
+    oficial.IBS = itemAcc.IBS;
+    oficial.CBS = itemAcc.CBS;
+  }
+
+  // ===== Divergências
   const divergencias: Divergencia[] = [];
   let gravidadeNota: Severity | null = null;
-  let statusNota: Processed["nota"]["status"] = null;
+  let statusNota: NotaSimplificada["status"] = null;
 
   if (temICMSTot) {
     const diff = somaItens - (valorDeclarado as number);
@@ -187,28 +235,19 @@ function processXml(xmlText: string): Processed | null {
       gravidadeNota = grav;
       statusNota = status;
       divergencias.push({
-        chave,
-        tipo: "TOTAL_DIVERGENTE",
-        campo: "vNF",
+        chave, tipo: "TOTAL_DIVERGENTE", campo: "vNF",
         valorCalculado: somaItens,
         valorDeclarado: valorDeclarado as number,
-        diferenca: diff,
-        gravidade: grav,
-        status,
+        diferenca: diff, gravidade: grav, status,
       });
     }
   } else {
     gravidadeNota = "MEDIA";
     statusNota = "CORRIGIDO";
     divergencias.push({
-      chave,
-      tipo: "TOTAL_AUSENTE",
-      campo: "ICMSTot",
-      valorCalculado: somaItens,
-      valorDeclarado: 0,
-      diferenca: somaItens,
-      gravidade: "MEDIA",
-      status: "CORRIGIDO",
+      chave, tipo: "TOTAL_AUSENTE", campo: "ICMSTot",
+      valorCalculado: somaItens, valorDeclarado: 0,
+      diferenca: somaItens, gravidade: "MEDIA", status: "CORRIGIDO",
     });
   }
 
@@ -228,9 +267,25 @@ function processXml(xmlText: string): Processed | null {
     divergencia: gravidadeNota,
     status: statusNota,
     fonte,
+    vICMS: oficial.ICMS.v,
+    vST: oficial.ICMS_ST.v,
+    vFCP: oficial.FCP.v,
+    vFCPST: oficial.FCP_ST.v,
+    vIPI: oficial.IPI.v,
+    vPIS: oficial.PIS.v,
+    vCOFINS: oficial.COFINS.v,
+    vIBS: oficial.IBS.v,
+    vCBS: oficial.CBS.v,
   };
 
-  return { nota, divergencias, taxes: localTax };
+  // taxes para agregação no dashboard
+  const taxesOut: Processed["taxes"] = {};
+  for (const k of taxKeys) {
+    const t = oficial[k];
+    if (t.v || t.b) taxesOut[k] = { v: t.v, b: t.b };
+  }
+
+  return { nota, divergencias, taxes: taxesOut };
 }
 
 async function sha256Hex(bytes: Uint8Array): Promise<string> {
