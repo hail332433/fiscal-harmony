@@ -20,9 +20,8 @@ export default function Auditoria() {
   return (
     <div className="px-10 py-10 max-w-6xl space-y-8">
       <header>
-        <div className="text-xs font-medium tracking-widest text-primary uppercase">Etapa 4 de 5</div>
-        <h1 className="text-3xl font-semibold tracking-tight mt-1">Auditoria & Auto-correção</h1>
-        <p className="text-muted-foreground mt-1">Regras determinísticas aplicadas a {fmtNum(notas.length)} XMLs.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Auditoria</h1>
+        <p className="text-sm text-muted-foreground mt-1.5">Regras determinísticas aplicadas a {fmtNum(notas.length)} XMLs</p>
       </header>
 
       <div className="grid md:grid-cols-4 gap-4">
