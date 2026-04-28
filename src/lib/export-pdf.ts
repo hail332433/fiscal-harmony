@@ -152,14 +152,14 @@ export function exportDashboardPdf(
   const pageH = doc.internal.pageSize.getHeight();
 
   // ===== Cabeçalho =====
-  doc.setFillColor(79, 70, 229);
+  doc.setFillColor(BRAND_DARK[0], BRAND_DARK[1], BRAND_DARK[2]);
   doc.rect(0, 0, pageW, 28, "F");
   doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
   doc.text("Relatório Fiscal", MARGIN, 18);
 
   doc.setFontSize(18);
-  doc.setTextColor(20, 20, 20);
+  doc.setTextColor(BRAND_DARK[0], BRAND_DARK[1], BRAND_DARK[2]);
   doc.text("Painel Consolidado", MARGIN, 58);
   doc.setFontSize(10);
   doc.setTextColor(110, 110, 110);
@@ -170,15 +170,15 @@ export function exportDashboardPdf(
     74,
   );
 
-  // ===== Cards principais (coloridos) =====
+  // ===== Cards principais (verde escuro, texto branco) =====
   const { stats, taxCards, riskSummary } = dashboard;
   const cardW = (pageW - MARGIN * 2 - 30) / 4;
   const cardH = 64;
   const cardsY = 92;
-  drawColorCard(doc, MARGIN + 0 * (cardW + 10), cardsY, cardW, cardH, "Total de notas", fmtNum(stats.totalNotas), undefined, [79, 70, 229]);
-  drawColorCard(doc, MARGIN + 1 * (cardW + 10), cardsY, cardW, cardH, "NF-e (mod. 55)", fmtNum(stats.modelo55), undefined, [37, 99, 235]);
-  drawColorCard(doc, MARGIN + 2 * (cardW + 10), cardsY, cardW, cardH, "NFC-e (mod. 65)", fmtNum(stats.modelo65), undefined, [14, 165, 233]);
-  drawColorCard(doc, MARGIN + 3 * (cardW + 10), cardsY, cardW, cardH, "Receita total", fmtBRL(stats.totalRevenue), undefined, [22, 163, 74]);
+  drawColorCard(doc, MARGIN + 0 * (cardW + 10), cardsY, cardW, cardH, "Total de notas", fmtNum(stats.totalNotas), undefined, BRAND_DARK);
+  drawColorCard(doc, MARGIN + 1 * (cardW + 10), cardsY, cardW, cardH, "NF-e (mod. 55)", fmtNum(stats.modelo55), undefined, BRAND_DEEP);
+  drawColorCard(doc, MARGIN + 2 * (cardW + 10), cardsY, cardW, cardH, "NFC-e (mod. 65)", fmtNum(stats.modelo65), undefined, BRAND_MAIN);
+  drawColorCard(doc, MARGIN + 3 * (cardW + 10), cardsY, cardW, cardH, "Receita total", fmtBRL(stats.totalRevenue), undefined, BRAND_MID);
 
   // ===== Tributos consolidados — TODOS os cards (sem corte) =====
   let y = cardsY + cardH + 20;
