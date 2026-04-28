@@ -52,9 +52,9 @@ export default function Divergencias() {
           <h1 className="text-2xl font-bold tracking-tight">Divergências</h1>
           <p className="text-sm text-muted-foreground mt-1.5">
             {fmtNum(divergencias.length)} divergência(s) detectada(s).{" "}
-            {corrigiveis > 0 && (
+            {totalCorrigiveis > 0 && (
               <span className="text-foreground">
-                <strong>{fmtNum(corrigiveis)}</strong> podem ser auto-corrigidas pela regra do XML.
+                <strong>{fmtNum(totalCorrigiveis)}</strong> podem ser auto-corrigidas pela regra do XML.
               </span>
             )}
           </p>
@@ -62,11 +62,11 @@ export default function Divergencias() {
         <Button
           size="lg"
           onClick={handleCorrigir}
-          disabled={corrigiveis === 0}
+          disabled={totalCorrigiveis === 0}
           className="bg-gradient-primary shadow-elegant"
         >
           <Wand2 className="size-4 mr-2" />
-          Corrigir divergências ({fmtNum(corrigiveis)})
+          Corrigir divergências ({fmtNum(totalCorrigiveis)})
         </Button>
       </header>
 
